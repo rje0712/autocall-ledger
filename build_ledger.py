@@ -1919,13 +1919,7 @@ ${unpaids.join('\\n')}
 
 final_html = html_template.replace('__INITIAL_DATA_PLACEHOLDER__', json_data_str)
 
-with open('autocall_ledger.html', 'w', encoding='utf-8') as f:
-    f.write(final_html)
-
 with open('index.html', 'w', encoding='utf-8') as f:
     f.write(final_html)
 
-with open('오토콜_회비장부.html', 'w', encoding='utf-8') as f:
-    f.write(final_html)
-
-print('Successfully generated autocall_ledger.html, index.html, and 오토콜_회비장부.html with bulk entry and excel import!')
+print('Successfully generated index.html with smart auto-fill and bulk entry!')
