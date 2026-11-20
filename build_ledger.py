@@ -152,7 +152,7 @@ def main():
             </div>'''
         html = html.replace(old_header_p, new_header_div)
     else:
-        html = re.sub(r'<span id="lastUpdatedText">.*?</span>', f'<span id="lastUpdatedText">{now_str}</span>', html)
+        html = re.sub(r'<span id="lastUpdatedText">.*?</span>', f'<span id="lastUpdatedText">{now_str}</span>', html, count=1)
 
     # Fix loadData for viewers
     old_loaddata = '''    // Load Data from LocalStorage or Default
