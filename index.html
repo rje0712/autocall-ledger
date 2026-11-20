@@ -85,7 +85,7 @@
               <span class="hidden sm:inline">2026 오토콜 정기 회비 스마트 관리 시스템</span>
               <span class="hidden sm:inline text-slate-600">•</span>
               <span class="text-emerald-400 font-medium inline-flex items-center">
-                <i class="fa-solid fa-clock-rotate-left mr-1"></i>최종 업데이트: <span id="lastUpdatedText">2026.11.20 11:00</span>
+                <i class="fa-solid fa-clock-rotate-left mr-1"></i>최종 업데이트: <span id="lastUpdatedText">2026.11.20 11:10</span>
               </span>
             </div>
           </div>
@@ -102,6 +102,10 @@
 
           <!-- Admin Mode Buttons -->
           <div id="adminActions" class="hidden flex items-center space-x-2 flex-wrap sm:flex-nowrap">
+            <!-- 0. GitHub Direct Deploy Button -->
+            <button id="publishBtn" onclick="publishToGitHub()" class="inline-flex items-center px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md transition transform hover:scale-105 active:scale-95 animate-pulse" title="홈페이지에서 수정한 내용을 전체 계원에게 실시간 즉시 반영">
+              <i class="fa-solid fa-cloud-arrow-up mr-1.5 text-amber-300"></i>웹사이트 즉시 반영
+            </button>
             <!-- 1. Single Transaction Add -->
             <button onclick="openAddTxModal()" class="inline-flex items-center px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition" title="한 번에 1건 등록 (자동 충당 지원)">
               <i class="fa-solid fa-plus mr-1.5"></i>건별 등록
@@ -141,6 +145,9 @@
                   <input type="file" id="importJsonFile" accept=".json" class="hidden" onchange="importJsonBackup(event)">
                 </div>
                 <div class="p-1">
+                  <button onclick="openGitHubTokenModal()" class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg flex items-center font-medium">
+                    <i class="fa-brands fa-github text-slate-800 w-5"></i>GitHub 토큰 설정 (모바일 직접 반영)
+                  </button>
                   <button onclick="openChangePasswordModal()" class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg flex items-center">
                     <i class="fa-solid fa-key text-amber-500 w-5"></i>비밀번호 변경
                   </button>
@@ -431,6 +438,44 @@
 
   <!-- ================= MODALS ================= -->
 
+  <!-- GitHub Token Modal -->
+  <div id="githubTokenModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-slate-800 border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="text-lg font-bold flex items-center text-slate-900">
+          <i class="fa-brands fa-github mr-2 text-slate-800 text-xl"></i>GitHub 자동 배포 연동
+        </h3>
+        <button onclick="closeGitHubTokenModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+        GitHub 개인 액세스 토큰(Personal Access Token)을 한 번만 등록하시면, <strong>엑셀이나 컴퓨터 없이 스마트폰 웹에서도 버튼 하나로 실시간 장부를 업데이트</strong>할 수 있습니다.
+      </p>
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-slate-700 mb-1">GitHub 토큰</label>
+        <div class="relative">
+          <input type="password" id="githubTokenInput" placeholder="gho_ 또는 ghp_ 로 시작하는 토큰 입력"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono pr-10">
+          <button type="button" onclick="toggleTokenVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
+            <i class="fa-regular fa-eye" id="tokenEyeIcon"></i>
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1.5">
+          * 토큰은 오직 사용하시는 브라우저(로컬 저장소)에만 안전하게 보관됩니다.
+        </p>
+      </div>
+      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+        <button onclick="closeGitHubTokenModal()" class="px-4 py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">
+          취소
+        </button>
+        <button onclick="saveGitHubToken()" class="px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-sm">
+          저장하기
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 1. Admin Login Modal -->
   <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200">
@@ -687,7 +732,7 @@
   <!-- Javascript Logic -->
   <script>
     // Embedded initial data
-    const INITIAL_DATA = {"title": "오토콜 회비 장부", "year": 2026, "members": ["김민혁", "김영규", "류제은", "박지안", "손지원", "이정훈", "이준용", "전준환"], "months": ["2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"], "monthlyFees": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 20000, "12월": 20000}, "monthlyMatrix": {"김민혁": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 0, "11월": 0, "12월": 0}, "김영규": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 0, "12월": 0}, "류제은": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 0, "10월": 0, "11월": 0, "12월": 0}, "박지안": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 20000, "12월": 0}, "손지원": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 0, "11월": 0, "12월": 0}, "이정훈": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 20000, "12월": 0}, "이준용": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 20000, "12월": 0}, "전준환": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 0, "12월": 0}}, "transactions": [{"id": 1, "month": "2월", "extraMonth": "", "person": "손지원", "amount": 10000, "date": "26.02.07", "note": ""}, {"id": 2, "month": "2월", "extraMonth": "", "person": "류제은", "amount": -10000, "date": "26.02.07", "note": "오출금"}, {"id": 3, "month": "2월", "extraMonth": "", "person": "김영규", "amount": 10000, "date": "26.02.07", "note": ""}, {"id": 4, "month": "2월", "extraMonth": "", "person": "류제은", "amount": 20000, "date": "26.02.07", "note": "오출금 반환"}, {"id": 5, "month": "2월", "extraMonth": "", "person": "전준환", "amount": 10000, "date": "26.02.07", "note": ""}, {"id": 6, "month": "2월", "extraMonth": "", "person": "이준용", "amount": 10000, "date": "26.02.07", "note": ""}, {"id": 7, "month": "2월", "extraMonth": "", "person": "김민혁", "amount": 10000, "date": "26.02.11", "note": ""}, {"id": 8, "month": "2월", "extraMonth": "", "person": "류제은", "amount": -10000, "date": "26.02.11", "note": "오출금"}, {"id": 9, "month": "2월", "extraMonth": "4월", "person": "류제은", "amount": 20000, "date": "26.02.11", "note": "오출금 반환 및 회비 입금"}, {"id": 10, "month": "2월", "extraMonth": "", "person": "이정훈", "amount": 10000, "date": "26.02.11", "note": ""}, {"id": 11, "month": "2월", "extraMonth": "", "person": "예금이자", "amount": 4, "date": "26.02.28", "note": ""}, {"id": 12, "month": "3월", "extraMonth": "", "person": "류제은", "amount": 10000, "date": "26.03.23", "note": ""}, {"id": 13, "month": "3월", "extraMonth": "", "person": "전준환", "amount": 10000, "date": "26.03.25", "note": ""}, {"id": 14, "month": "3월", "extraMonth": "", "person": "김영규", "amount": 10000, "date": "26.03.26", "note": ""}, {"id": 15, "month": "3월", "extraMonth": "2월", "person": "박지안", "amount": 20000, "date": "26.03.26", "note": ""}, {"id": 16, "month": "3월", "extraMonth": "", "person": "손지원", "amount": 10000, "date": "26.03.26", "note": ""}, {"id": 17, "month": "3월", "extraMonth": "", "person": "예금이자", "amount": 6, "date": "26.03.28", "note": ""}, {"id": 18, "month": "3월", "extraMonth": "", "person": "이정훈", "amount": 10000, "date": "26.03.28", "note": ""}, {"id": 19, "month": "3월", "extraMonth": "", "person": "이준용", "amount": 10000, "date": "26.04.05", "note": ""}, {"id": 20, "month": "3월", "extraMonth": "", "person": "김민혁", "amount": 10000, "date": "26.04.23", "note": ""}, {"id": 21, "month": "4월", "extraMonth": "", "person": "예금이자", "amount": 12, "date": "26.04.25", "note": ""}, {"id": 22, "month": "4월", "extraMonth": "", "person": "김영규", "amount": 10000, "date": "26.04.25", "note": ""}, {"id": 23, "month": "4월", "extraMonth": "", "person": "이준용", "amount": 10000, "date": "26.04.27", "note": ""}, {"id": 24, "month": "4월", "extraMonth": "", "person": "김민혁", "amount": 10000, "date": "26.04.27", "note": ""}, {"id": 25, "month": "4월", "extraMonth": "", "person": "이정훈", "amount": 10000, "date": "26.04.28", "note": ""}, {"id": 26, "month": "4월", "extraMonth": "", "person": "손지원", "amount": 10000, "date": "26.04.28", "note": ""}, {"id": 27, "month": "4월", "extraMonth": "5월", "person": "전준환", "amount": 20000, "date": "26.04.30", "note": ""}, {"id": 28, "month": "4월", "extraMonth": "", "person": "박지안", "amount": 10000, "date": "26.04.30", "note": ""}, {"id": 29, "month": "5월", "extraMonth": "", "person": "김영규", "amount": 10000, "date": "26.05.01", "note": ""}, {"id": 30, "month": "5월", "extraMonth": "", "person": "손지원", "amount": 10000, "date": "26.05.14", "note": ""}, {"id": 31, "month": "5월", "extraMonth": "", "person": "예금이자", "amount": 19, "date": "26.05.23", "note": ""}, {"id": 32, "month": "5월", "extraMonth": "", "person": "박지안", "amount": 10000, "date": "26.05.31", "note": ""}, {"id": 33, "month": "5월", "extraMonth": "", "person": "류제은", "amount": 10000, "date": "26.05.31", "note": ""}, {"id": 34, "month": "5월", "extraMonth": "", "person": "이준용", "amount": 10000, "date": "26.05.31", "note": ""}, {"id": 35, "month": "5월", "extraMonth": "", "person": "김민혁", "amount": 10000, "date": "26.06.15", "note": ""}, {"id": 36, "month": "5월", "extraMonth": "", "person": "이정훈", "amount": 10000, "date": "26.06.15", "note": ""}, {"id": 37, "month": "6월", "extraMonth": "", "person": "이준용", "amount": 20000, "date": "26.06.15", "note": ""}, {"id": 38, "month": "6월", "extraMonth": "", "person": "전준환", "amount": 20000, "date": "26.06.15", "note": ""}, {"id": 39, "month": "6월", "extraMonth": "", "person": "예금이자", "amount": 30, "date": "26.06.27", "note": ""}, {"id": 40, "month": "6월", "extraMonth": "", "person": "김영규", "amount": 20000, "date": "26.06.30", "note": ""}, {"id": 41, "month": "6월", "extraMonth": "", "person": "손지원", "amount": 20000, "date": "26.06.30", "note": ""}, {"id": 42, "month": "6월", "extraMonth": "", "person": "김민혁", "amount": 20000, "date": "26.06.30", "note": ""}, {"id": 43, "month": "6월", "extraMonth": "", "person": "이정훈", "amount": 20000, "date": "26.06.30", "note": ""}, {"id": 44, "month": "6월", "extraMonth": "", "person": "박지안", "amount": 20000, "date": "26.07.01", "note": ""}, {"id": 45, "month": "6월", "extraMonth": "", "person": "류제은", "amount": 20000, "date": "26.07.08", "note": ""}, {"id": 46, "month": "7월", "extraMonth": "", "person": "류제은", "amount": 20000, "date": "26.07.08", "note": ""}, {"id": 47, "month": "7월", "extraMonth": "", "person": "김영규", "amount": 20000, "date": "26.07.09", "note": ""}, {"id": 48, "month": "7월", "extraMonth": "", "person": "전준환", "amount": 20000, "date": "26.07.10", "note": ""}, {"id": 49, "month": "7월", "extraMonth": "", "person": "류제은", "amount": -17847, "date": "26.07.12", "note": "오출금"}, {"id": 50, "month": "7월", "extraMonth": "", "person": "류제은", "amount": 17847, "date": "26.07.12", "note": "오출금 반환"}, {"id": 51, "month": "7월", "extraMonth": "", "person": "류제은", "amount": -2300, "date": "26.07.19", "note": "오출금"}, {"id": 52, "month": "7월", "extraMonth": "", "person": "류제은", "amount": 2300, "date": "26.07.19", "note": "오출금 반환"}, {"id": 53, "month": "7월", "extraMonth": "", "person": "예금이자", "amount": 37, "date": "26.07.25", "note": ""}, {"id": 54, "month": "7월", "extraMonth": "", "person": "손지원", "amount": 20000, "date": "26.08.02", "note": ""}, {"id": 55, "month": "7월", "extraMonth": "", "person": "이준용", "amount": 20000, "date": "26.08.06", "note": ""}, {"id": 56, "month": "8월", "extraMonth": "", "person": "류제은", "amount": 10000, "date": "26.08.24", "note": ""}, {"id": 57, "month": "8월", "extraMonth": "", "person": "류제은", "amount": 10000, "date": "26.08.24", "note": ""}, {"id": 58, "month": "8월", "extraMonth": "", "person": "이준용", "amount": 20000, "date": "26.08.28", "note": ""}, {"id": 59, "month": "7월", "extraMonth": "", "person": "김민혁", "amount": 20000, "date": "26.08.29", "note": ""}, {"id": 60, "month": "8월", "extraMonth": "", "person": "김민혁", "amount": 20000, "date": "26.08.29", "note": ""}, {"id": 61, "month": "9월", "extraMonth": "", "person": "김민혁", "amount": 20000, "date": "26.08.29", "note": ""}, {"id": 62, "month": "7월", "extraMonth": "", "person": "이정훈", "amount": 20000, "date": "26.08.29", "note": ""}, {"id": 63, "month": "8월", "extraMonth": "", "person": "이정훈", "amount": 20000, "date": "26.08.29", "note": ""}, {"id": 64, "month": "8월", "extraMonth": "", "person": "예금이자", "amount": 54, "date": "26.08.29", "note": ""}, {"id": 65, "month": "8월", "extraMonth": "", "person": "김영규", "amount": 20000, "date": "26.08.31", "note": ""}, {"id": 66, "month": "8월", "extraMonth": "", "person": "손지원", "amount": 20000, "date": "26.09.01", "note": ""}, {"id": 67, "month": "8월", "extraMonth": "", "person": "전준환", "amount": 20000, "date": "26.09.03", "note": ""}, {"id": 68, "month": "9월", "extraMonth": "", "person": "전준환", "amount": 20000, "date": "26.09.03", "note": ""}, {"id": 69, "month": "9월", "extraMonth": "", "person": "예금이자", "amount": 60, "date": "26.09.26", "note": ""}, {"id": 70, "month": "9월", "extraMonth": "", "person": "김영규", "amount": 20000, "date": "26.09.30", "note": ""}, {"id": 71, "month": "9월", "extraMonth": "", "person": "손지원", "amount": 20000, "date": "26.10.18", "note": ""}, {"id": 72, "month": "10월", "extraMonth": "", "person": "전준환", "amount": 20000, "date": "26.10.19", "note": ""}, {"id": 73, "month": "10월", "extraMonth": "", "person": "예금이자", "amount": 63, "date": "26.10.24", "note": ""}, {"id": 74, "month": "10월", "extraMonth": "", "person": "김영규", "amount": 20000, "date": "26.10.30", "note": ""}, {"id": 75, "month": "11월", "extraMonth": "9월,10월", "person": "이준용", "amount": 60000, "date": "26.11.11", "note": ""}, {"id": 76, "month": "11월", "extraMonth": "7월, 8월, 9월, 10월", "person": "박지안", "amount": 100000, "date": "26..11.11", "note": ""}, {"id": 77, "date": "26.11.12", "month": "11월", "extraMonth": "9월, 10월", "person": "이정훈", "amount": 60000, "note": "3개월치 회비 일괄 납부 (9월~11월)"}], "updatedAt": "2026.11.20 11:00"};
+    const INITIAL_DATA = {"title": "오토콜 회비 장부", "year": 2026, "members": ["김민혁", "김영규", "류제은", "박지안", "손지원", "이정훈", "이준용", "전준환"], "months": ["2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"], "monthlyFees": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 20000, "12월": 20000}, "monthlyMatrix": {"김민혁": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 0, "11월": 0, "12월": 0}, "김영규": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 0, "12월": 0}, "류제은": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 0, "10월": 0, "11월": 0, "12월": 0}, "박지안": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 20000, "12월": 0}, "손지원": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 0, "11월": 0, "12월": 0}, "이정훈": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 20000, "12월": 0}, "이준용": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 20000, "12월": 0}, "전준환": {"2월": 10000, "3월": 10000, "4월": 10000, "5월": 10000, "6월": 20000, "7월": 20000, "8월": 20000, "9월": 20000, "10월": 20000, "11월": 0, "12월": 0}}, "transactions": [{"id": 1, "month": "2월", "extraMonth": "", "person": "손지원", "amount": 10000, "date": "26.02.07", "note": ""}, {"id": 2, "month": "2월", "extraMonth": "", "person": "류제은", "amount": -10000, "date": "26.02.07", "note": "오출금"}, {"id": 3, "month": "2월", "extraMonth": "", "person": "김영규", "amount": 10000, "date": "26.02.07", "note": ""}, {"id": 4, "month": "2월", "extraMonth": "", "person": "류제은", "amount": 20000, "date": "26.02.07", "note": "오출금 반환"}, {"id": 5, "month": "2월", "extraMonth": "", "person": "전준환", "amount": 10000, "date": "26.02.07", "note": ""}, {"id": 6, "month": "2월", "extraMonth": "", "person": "이준용", "amount": 10000, "date": "26.02.07", "note": ""}, {"id": 7, "month": "2월", "extraMonth": "", "person": "김민혁", "amount": 10000, "date": "26.02.11", "note": ""}, {"id": 8, "month": "2월", "extraMonth": "", "person": "류제은", "amount": -10000, "date": "26.02.11", "note": "오출금"}, {"id": 9, "month": "2월", "extraMonth": "4월", "person": "류제은", "amount": 20000, "date": "26.02.11", "note": "오출금 반환 및 회비 입금"}, {"id": 10, "month": "2월", "extraMonth": "", "person": "이정훈", "amount": 10000, "date": "26.02.11", "note": ""}, {"id": 11, "month": "2월", "extraMonth": "", "person": "예금이자", "amount": 4, "date": "26.02.28", "note": ""}, {"id": 12, "month": "3월", "extraMonth": "", "person": "류제은", "amount": 10000, "date": "26.03.23", "note": ""}, {"id": 13, "month": "3월", "extraMonth": "", "person": "전준환", "amount": 10000, "date": "26.03.25", "note": ""}, {"id": 14, "month": "3월", "extraMonth": "", "person": "김영규", "amount": 10000, "date": "26.03.26", "note": ""}, {"id": 15, "month": "3월", "extraMonth": "2월", "person": "박지안", "amount": 20000, "date": "26.03.26", "note": ""}, {"id": 16, "month": "3월", "extraMonth": "", "person": "손지원", "amount": 10000, "date": "26.03.26", "note": ""}, {"id": 17, "month": "3월", "extraMonth": "", "person": "예금이자", "amount": 6, "date": "26.03.28", "note": ""}, {"id": 18, "month": "3월", "extraMonth": "", "person": "이정훈", "amount": 10000, "date": "26.03.28", "note": ""}, {"id": 19, "month": "3월", "extraMonth": "", "person": "이준용", "amount": 10000, "date": "26.04.05", "note": ""}, {"id": 20, "month": "3월", "extraMonth": "", "person": "김민혁", "amount": 10000, "date": "26.04.23", "note": ""}, {"id": 21, "month": "4월", "extraMonth": "", "person": "예금이자", "amount": 12, "date": "26.04.25", "note": ""}, {"id": 22, "month": "4월", "extraMonth": "", "person": "김영규", "amount": 10000, "date": "26.04.25", "note": ""}, {"id": 23, "month": "4월", "extraMonth": "", "person": "이준용", "amount": 10000, "date": "26.04.27", "note": ""}, {"id": 24, "month": "4월", "extraMonth": "", "person": "김민혁", "amount": 10000, "date": "26.04.27", "note": ""}, {"id": 25, "month": "4월", "extraMonth": "", "person": "이정훈", "amount": 10000, "date": "26.04.28", "note": ""}, {"id": 26, "month": "4월", "extraMonth": "", "person": "손지원", "amount": 10000, "date": "26.04.28", "note": ""}, {"id": 27, "month": "4월", "extraMonth": "5월", "person": "전준환", "amount": 20000, "date": "26.04.30", "note": ""}, {"id": 28, "month": "4월", "extraMonth": "", "person": "박지안", "amount": 10000, "date": "26.04.30", "note": ""}, {"id": 29, "month": "5월", "extraMonth": "", "person": "김영규", "amount": 10000, "date": "26.05.01", "note": ""}, {"id": 30, "month": "5월", "extraMonth": "", "person": "손지원", "amount": 10000, "date": "26.05.14", "note": ""}, {"id": 31, "month": "5월", "extraMonth": "", "person": "예금이자", "amount": 19, "date": "26.05.23", "note": ""}, {"id": 32, "month": "5월", "extraMonth": "", "person": "박지안", "amount": 10000, "date": "26.05.31", "note": ""}, {"id": 33, "month": "5월", "extraMonth": "", "person": "류제은", "amount": 10000, "date": "26.05.31", "note": ""}, {"id": 34, "month": "5월", "extraMonth": "", "person": "이준용", "amount": 10000, "date": "26.05.31", "note": ""}, {"id": 35, "month": "5월", "extraMonth": "", "person": "김민혁", "amount": 10000, "date": "26.06.15", "note": ""}, {"id": 36, "month": "5월", "extraMonth": "", "person": "이정훈", "amount": 10000, "date": "26.06.15", "note": ""}, {"id": 37, "month": "6월", "extraMonth": "", "person": "이준용", "amount": 20000, "date": "26.06.15", "note": ""}, {"id": 38, "month": "6월", "extraMonth": "", "person": "전준환", "amount": 20000, "date": "26.06.15", "note": ""}, {"id": 39, "month": "6월", "extraMonth": "", "person": "예금이자", "amount": 30, "date": "26.06.27", "note": ""}, {"id": 40, "month": "6월", "extraMonth": "", "person": "김영규", "amount": 20000, "date": "26.06.30", "note": ""}, {"id": 41, "month": "6월", "extraMonth": "", "person": "손지원", "amount": 20000, "date": "26.06.30", "note": ""}, {"id": 42, "month": "6월", "extraMonth": "", "person": "김민혁", "amount": 20000, "date": "26.06.30", "note": ""}, {"id": 43, "month": "6월", "extraMonth": "", "person": "이정훈", "amount": 20000, "date": "26.06.30", "note": ""}, {"id": 44, "month": "6월", "extraMonth": "", "person": "박지안", "amount": 20000, "date": "26.07.01", "note": ""}, {"id": 45, "month": "6월", "extraMonth": "", "person": "류제은", "amount": 20000, "date": "26.07.08", "note": ""}, {"id": 46, "month": "7월", "extraMonth": "", "person": "류제은", "amount": 20000, "date": "26.07.08", "note": ""}, {"id": 47, "month": "7월", "extraMonth": "", "person": "김영규", "amount": 20000, "date": "26.07.09", "note": ""}, {"id": 48, "month": "7월", "extraMonth": "", "person": "전준환", "amount": 20000, "date": "26.07.10", "note": ""}, {"id": 49, "month": "7월", "extraMonth": "", "person": "류제은", "amount": -17847, "date": "26.07.12", "note": "오출금"}, {"id": 50, "month": "7월", "extraMonth": "", "person": "류제은", "amount": 17847, "date": "26.07.12", "note": "오출금 반환"}, {"id": 51, "month": "7월", "extraMonth": "", "person": "류제은", "amount": -2300, "date": "26.07.19", "note": "오출금"}, {"id": 52, "month": "7월", "extraMonth": "", "person": "류제은", "amount": 2300, "date": "26.07.19", "note": "오출금 반환"}, {"id": 53, "month": "7월", "extraMonth": "", "person": "예금이자", "amount": 37, "date": "26.07.25", "note": ""}, {"id": 54, "month": "7월", "extraMonth": "", "person": "손지원", "amount": 20000, "date": "26.08.02", "note": ""}, {"id": 55, "month": "7월", "extraMonth": "", "person": "이준용", "amount": 20000, "date": "26.08.06", "note": ""}, {"id": 56, "month": "8월", "extraMonth": "", "person": "류제은", "amount": 10000, "date": "26.08.24", "note": ""}, {"id": 57, "month": "8월", "extraMonth": "", "person": "류제은", "amount": 10000, "date": "26.08.24", "note": ""}, {"id": 58, "month": "8월", "extraMonth": "", "person": "이준용", "amount": 20000, "date": "26.08.28", "note": ""}, {"id": 59, "month": "7월", "extraMonth": "", "person": "김민혁", "amount": 20000, "date": "26.08.29", "note": ""}, {"id": 60, "month": "8월", "extraMonth": "", "person": "김민혁", "amount": 20000, "date": "26.08.29", "note": ""}, {"id": 61, "month": "9월", "extraMonth": "", "person": "김민혁", "amount": 20000, "date": "26.08.29", "note": ""}, {"id": 62, "month": "7월", "extraMonth": "", "person": "이정훈", "amount": 20000, "date": "26.08.29", "note": ""}, {"id": 63, "month": "8월", "extraMonth": "", "person": "이정훈", "amount": 20000, "date": "26.08.29", "note": ""}, {"id": 64, "month": "8월", "extraMonth": "", "person": "예금이자", "amount": 54, "date": "26.08.29", "note": ""}, {"id": 65, "month": "8월", "extraMonth": "", "person": "김영규", "amount": 20000, "date": "26.08.31", "note": ""}, {"id": 66, "month": "8월", "extraMonth": "", "person": "손지원", "amount": 20000, "date": "26.09.01", "note": ""}, {"id": 67, "month": "8월", "extraMonth": "", "person": "전준환", "amount": 20000, "date": "26.09.03", "note": ""}, {"id": 68, "month": "9월", "extraMonth": "", "person": "전준환", "amount": 20000, "date": "26.09.03", "note": ""}, {"id": 69, "month": "9월", "extraMonth": "", "person": "예금이자", "amount": 60, "date": "26.09.26", "note": ""}, {"id": 70, "month": "9월", "extraMonth": "", "person": "김영규", "amount": 20000, "date": "26.09.30", "note": ""}, {"id": 71, "month": "9월", "extraMonth": "", "person": "손지원", "amount": 20000, "date": "26.10.18", "note": ""}, {"id": 72, "month": "10월", "extraMonth": "", "person": "전준환", "amount": 20000, "date": "26.10.19", "note": ""}, {"id": 73, "month": "10월", "extraMonth": "", "person": "예금이자", "amount": 63, "date": "26.10.24", "note": ""}, {"id": 74, "month": "10월", "extraMonth": "", "person": "김영규", "amount": 20000, "date": "26.10.30", "note": ""}, {"id": 75, "month": "11월", "extraMonth": "9월,10월", "person": "이준용", "amount": 60000, "date": "26.11.11", "note": ""}, {"id": 76, "month": "11월", "extraMonth": "7월, 8월, 9월, 10월", "person": "박지안", "amount": 100000, "date": "26..11.11", "note": ""}, {"id": 77, "date": "26.11.12", "month": "11월", "extraMonth": "9월, 10월", "person": "이정훈", "amount": 60000, "note": "3개월치 회비 일괄 납부 (9월~11월)"}], "updatedAt": "2026.11.20 11:10"};
 
     // State
     let appData = null;
@@ -1920,6 +1965,197 @@ ${unpaids.join('\n')}
         setTimeout(() => toast.remove(), 300);
       }, 3200);
     }
+  
+    // ================= GITHUB DIRECT DEPLOY & TOKEN =================
+    function openGitHubTokenModal() {
+      const dropdown = document.getElementById('adminMenuDropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      const modal = document.getElementById('githubTokenModal');
+      const input = document.getElementById('githubTokenInput');
+      input.value = localStorage.getItem('autocall_github_token') || '';
+      modal.classList.remove('hidden');
+    }
+
+    function closeGitHubTokenModal() {
+      document.getElementById('githubTokenModal').classList.add('hidden');
+    }
+
+    function toggleTokenVisibility() {
+      const input = document.getElementById('githubTokenInput');
+      const icon = document.getElementById('tokenEyeIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+      }
+    }
+
+    function saveGitHubToken() {
+      const token = document.getElementById('githubTokenInput').value.trim();
+      if (!token) {
+        if (confirm('토큰을 삭제하시겠습니까? 삭제 시 웹사이트 직접 반영 기능을 사용할 수 없습니다.')) {
+          localStorage.removeItem('autocall_github_token');
+          closeGitHubTokenModal();
+          showToast('GitHub 토큰이 삭제되었습니다.', 'info');
+        }
+        return;
+      }
+      localStorage.setItem('autocall_github_token', token);
+      closeGitHubTokenModal();
+      showToast('GitHub 토큰이 성공적으로 저장되었습니다! 이제 버튼 하나로 웹사이트를 즉시 업데이트할 수 있습니다.', 'success');
+    }
+
+    async function publishToGitHub() {
+      let token = localStorage.getItem('autocall_github_token');
+      if (!token) {
+        openGitHubTokenModal();
+        return;
+      }
+
+      if (!confirm('현재 화면의 장부 내용을 GitHub 웹사이트에 즉시 반영하시겠습니까?\n(약 30초 후 모든 계원의 스마트폰 화면에 공개됩니다)')) {
+        return;
+      }
+
+      const btn = document.getElementById('publishBtn');
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i>서버 반영 중...';
+      }
+
+      showToast('GitHub 서버로 최신 장부를 전송하고 있습니다...', 'info');
+
+      const repo = 'rje0712/autocall-ledger';
+      const branch = 'main';
+
+      try {
+        // 1. Fetch current index.html from GitHub
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/index.html?ref=${branch}&t=${Date.now()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github+json'
+          }
+        });
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error('GitHub 토큰 인증 실패 (토큰이 올바르지 않거나 만료되었습니다. [관리 > GitHub 토큰 설정]에서 다시 입력해주세요)');
+          }
+          throw new Error(`GitHub 통신 오류: HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        const sha = data.sha;
+
+        // Decode base64 UTF-8 content
+        const binStr = atob(data.content.replace(/\s/g, ''));
+        const bytes = Uint8Array.from(binStr, c => c.charCodeAt(0));
+        const decoder = new TextDecoder('utf-8');
+        const remoteHtml = decoder.decode(bytes);
+
+        // Prepare updated content
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        const nowStr = `${year}.${month}.${day} ${hours}:${mins}`;
+
+        appData.updatedAt = nowStr;
+        const jsonStr = JSON.stringify(appData);
+
+        let updatedHtml = remoteHtml.replace(
+          /const INITIAL_DATA = [\s\S]*?;\s*\n\s*\/\/ State/,
+          `const INITIAL_DATA = ${jsonStr};\n\n    // State`
+        );
+        updatedHtml = updatedHtml.replace(
+          /<span id="lastUpdatedText">.*?<\/span>/,
+          `<span id="lastUpdatedText">2026.11.20 11:10</span>`
+        );
+
+        // Encode to base64 UTF-8
+        const encoder = new TextEncoder();
+        const encodedBytes = encoder.encode(updatedHtml);
+        let binary = '';
+        for (let i = 0; i < encodedBytes.length; i++) {
+          binary += String.fromCharCode(encodedBytes[i]);
+        }
+        const base64Content = btoa(binary);
+
+        // Commit to GitHub
+        const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/index.html`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `update: 웹에서 회비 장부 실시간 업데이트 (${nowStr})`,
+            content: base64Content,
+            sha: sha,
+            branch: branch
+          })
+        });
+
+        if (!putRes.ok) {
+          const errData = await putRes.json();
+          throw new Error(errData.message || '저장 실패');
+        }
+
+        // Also update ledger_data.json in background
+        try {
+          const jsonRes = await fetch(`https://api.github.com/repos/${repo}/contents/ledger_data.json?ref=${branch}&t=${Date.now()}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github+json'
+            }
+          });
+          if (jsonRes.ok) {
+            const jd = await jsonRes.json();
+            const jsonEncoder = new TextEncoder();
+            const jsonBytes = jsonEncoder.encode(JSON.stringify(appData, null, 2) + '\n');
+            let jBin = '';
+            for (let i = 0; i < jsonBytes.length; i++) jBin += String.fromCharCode(jsonBytes[i]);
+            await fetch(`https://api.github.com/repos/${repo}/contents/ledger_data.json`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github+json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                message: `update: ledger_data.json 동기화 (${nowStr})`,
+                content: btoa(jBin),
+                sha: jd.sha,
+                branch: branch
+              })
+            });
+          }
+        } catch (e) {
+          console.warn('ledger_data.json background sync skipped', e);
+        }
+
+        // Update local INITIAL_DATA in-memory
+        window.INITIAL_DATA = JSON.parse(jsonStr);
+        saveData();
+        renderAll();
+        confetti({ particleCount: 80, spread: 80 });
+        showToast('🎉 웹사이트에 성공적으로 반영되었습니다! 약 30초 후 모든 계원의 화면에 적용됩니다.', 'success');
+      } catch (err) {
+        console.error('Publish error:', err);
+        alert('❌ 웹사이트 반영 실패: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
+      }
+    }
+
   </script>
 </body>
 </html>
